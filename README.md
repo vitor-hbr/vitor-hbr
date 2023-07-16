@@ -1,4 +1,5 @@
-![Header](./header-image.png)
+
+![Screen Shot 2023-07-16 at 16 42 36](https://github.com/vitor-hbr/vitor-hbr/assets/53880209/06b98f59-8333-4f24-a97b-40463c1fda2f)
 
  I'm  **Vitor Hugo Brasiliense** (he/him), a software engineer with more than 4 years of experience, with a bachelor's degree in Computer Science from [Universidade de São Paulo (USP)](https://www5.usp.br/) and an associate degree in I.T from [ETEC Dr. Celso Giglio](https://www.cps.sp.gov.br/etecs/etec-dr-celso-giglio/).
 
