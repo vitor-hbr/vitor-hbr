@@ -1,4 +1,5 @@
 ![Header](./header-image.png)
+
  I'm  **Vitor Hugo Brasiliense** (he/him), a software engineer with more than 4 years of experience, with a bachelor's degree in Computer Science from [Universidade de São Paulo (USP)](https://www5.usp.br/) and an associate degree in I.T from [ETEC Dr. Celso Giglio](https://www.cps.sp.gov.br/etecs/etec-dr-celso-giglio/).
 
 Currently working as a Front-End Software Engineer at [Outsmart Digital](https://outsmartdigital.com.br/).
