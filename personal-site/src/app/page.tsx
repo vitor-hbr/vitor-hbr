@@ -41,9 +41,21 @@ const PROJECTS = [
 ];
 
 const LINKS = [
-  { label: "github", href: "https://github.com/vitor-hbr", display: "vitor-hbr" },
-  { label: "linkedin", href: "https://www.linkedin.com/in/vitor-hbr/", display: "in/vitor-hbr" },
-  { label: "email", href: "mailto:vitor.hbr@outlook.com", display: "vitor.hbr@outlook.com" },
+  {
+    label: "github",
+    href: "https://github.com/vitor-hbr",
+    display: "vitor-hbr",
+  },
+  {
+    label: "linkedin",
+    href: "https://www.linkedin.com/in/vitor-hbr/",
+    display: "in/vitor-hbr",
+  },
+  {
+    label: "email",
+    href: "mailto:vitor.hbr@outlook.com",
+    display: "vitor.hbr@outlook.com",
+  },
 ];
 
 function scrollToSection(section: Section) {
@@ -74,19 +86,22 @@ export default function Home() {
     scrollToSection(section);
   }, []);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
-    ) {
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
 
-    const item = NAV_ITEMS.find((item) => item.key === e.key.toLowerCase());
-    if (item) {
-      navigateToSection(item.section);
-    }
-  }, [navigateToSection]);
+      const item = NAV_ITEMS.find((item) => item.key === e.key.toLowerCase());
+      if (item) {
+        navigateToSection(item.section);
+      }
+    },
+    [navigateToSection]
+  );
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -122,9 +137,23 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY < 100) {
+        setActiveSection("home");
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col px-6 py-8 max-w-2xl mx-auto">
-      <nav className="flex gap-6 text-sm sticky top-0 bg-background/80 backdrop-blur-sm py-4 -mt-4 z-10" aria-label="Main navigation">
+      <nav
+        className="flex gap-6 text-sm sticky top-0 bg-background/80 backdrop-blur-sm py-4 -mt-4 z-10"
+        aria-label="Main navigation"
+      >
         {NAV_ITEMS.map((item) => {
           const isActive = activeSection === item.section;
           return (
@@ -148,14 +177,19 @@ export default function Home() {
         {/* Home Section */}
         <section
           id="home"
-          ref={(el) => { sectionRefs.current.home = el; }}
+          ref={(el) => {
+            sectionRefs.current.home = el;
+          }}
           className="scroll-mt-16 mb-24"
         >
           <div className="flex flex-col sm:flex-row gap-8 items-start mb-12">
             <ProfileImage />
             <div className="flex flex-col gap-4">
               <h1 className="text-3xl">
-                <AnimatedTitle key={`home-${animationKeys.home}`} text={SECTION_TITLES.home} />
+                <AnimatedTitle
+                  key={`home-${animationKeys.home}`}
+                  text={SECTION_TITLES.home}
+                />
               </h1>
               <p className="text-muted leading-relaxed">
                 full stack engineer specializing in react and next.js.
@@ -196,11 +230,16 @@ export default function Home() {
         {/* Projects Section */}
         <section
           id="projects"
-          ref={(el) => { sectionRefs.current.projects = el; }}
+          ref={(el) => {
+            sectionRefs.current.projects = el;
+          }}
           className="scroll-mt-16 mb-24"
         >
           <h2 className="text-3xl mb-8">
-            <AnimatedTitle key={`projects-${animationKeys.projects}`} text={SECTION_TITLES.projects} />
+            <AnimatedTitle
+              key={`projects-${animationKeys.projects}`}
+              text={SECTION_TITLES.projects}
+            />
           </h2>
           <div className="space-y-6">
             {PROJECTS.map((project) => (
@@ -237,11 +276,16 @@ export default function Home() {
         {/* Links Section */}
         <section
           id="links"
-          ref={(el) => { sectionRefs.current.links = el; }}
+          ref={(el) => {
+            sectionRefs.current.links = el;
+          }}
           className="scroll-mt-16 min-h-[60vh] flex flex-col"
         >
           <h2 className="text-3xl mb-8">
-            <AnimatedTitle key={`links-${animationKeys.links}`} text={SECTION_TITLES.links} />
+            <AnimatedTitle
+              key={`links-${animationKeys.links}`}
+              text={SECTION_TITLES.links}
+            />
           </h2>
           <div className="space-y-4">
             {LINKS.map((link) => (

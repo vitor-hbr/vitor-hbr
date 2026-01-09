@@ -7,8 +7,8 @@ import {
   particlesFragmentShader,
 } from "@/shaders/particles";
 
-const PARTICLE_COUNT = 100;
-const PARALLAX_STRENGTH = 0.5;
+const PARTICLE_COUNT = 30;
+const PARALLAX_STRENGTH = 0.8;
 
 export function BackgroundCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,48 +43,45 @@ export function BackgroundCanvas() {
     );
     camera.position.z = 5;
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    // Disabled antialiasing for performance
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Lower pixel ratio cap for performance
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     containerRef.current.appendChild(renderer.domElement);
 
     // Create particle geometry
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(PARTICLE_COUNT * 3);
-    const lifetimes = new Float32Array(PARTICLE_COUNT);
-    const maxLifetimes = new Float32Array(PARTICLE_COUNT);
-    const velocities = new Float32Array(PARTICLE_COUNT * 2);
+    const phases = new Float32Array(PARTICLE_COUNT);
+    const speeds = new Float32Array(PARTICLE_COUNT);
 
-    // Initialize particles
+    // Initialize particles - GPU will handle animation
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const i3 = i * 3;
-      const i2 = i * 2;
 
       positions[i3] = (Math.random() - 0.5) * 10;
       positions[i3 + 1] = (Math.random() - 0.5) * 10;
       positions[i3 + 2] = (Math.random() - 0.5) * 2;
 
-      maxLifetimes[i] = Math.random() * 200 + 100;
-      lifetimes[i] = Math.random() * maxLifetimes[i];
-
-      velocities[i2] = (Math.random() - 0.5) * 0.002;
-      velocities[i2 + 1] = (Math.random() - 0.5) * 0.002;
+      // Random phase offset for each particle
+      phases[i] = Math.random() * Math.PI * 2;
+      // Random speed multiplier
+      speeds[i] = Math.random() * 0.5 + 0.2;
     }
 
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute("aLifetime", new THREE.BufferAttribute(lifetimes, 1));
-    geometry.setAttribute(
-      "aMaxLifetime",
-      new THREE.BufferAttribute(maxLifetimes, 1)
-    );
+    geometry.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1));
+    geometry.setAttribute("aSpeed", new THREE.BufferAttribute(speeds, 1));
 
-    // Shader material
+    // Shader material with time uniform for GPU animation
     const material = new THREE.ShaderMaterial({
       vertexShader: particlesVertexShader,
       fragmentShader: particlesFragmentShader,
       uniforms: {
         uMouse: { value: new THREE.Vector2(0.5, 0.5) },
         uParallax: { value: PARALLAX_STRENGTH },
+        uTime: { value: 0 },
       },
       transparent: true,
       depthWrite: false,
@@ -108,7 +105,10 @@ export function BackgroundCanvas() {
     };
     window.addEventListener("resize", handleResize);
 
-    // Animation loop
+    // Track start time for animation
+    const startTime = performance.now();
+
+    // Animation loop - now GPU-driven, minimal CPU work
     const animate = () => {
       if (reducedMotionRef.current) {
         renderer.render(scene, camera);
@@ -117,46 +117,12 @@ export function BackgroundCanvas() {
 
       animationRef.current = requestAnimationFrame(animate);
 
-      // Update mouse uniform
+      // Update uniforms only - no CPU particle iteration
       material.uniforms.uMouse.value.set(
         mouseRef.current.x,
         mouseRef.current.y
       );
-
-      // Update particles
-      const positionAttr = geometry.attributes.position;
-      const lifetimeAttr = geometry.attributes.aLifetime;
-      const maxLifetimeAttr = geometry.attributes.aMaxLifetime;
-
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const i3 = i * 3;
-        const i2 = i * 2;
-
-        // Update position
-        (positionAttr.array as Float32Array)[i3] += velocities[i2];
-        (positionAttr.array as Float32Array)[i3 + 1] += velocities[i2 + 1];
-
-        // Update lifetime
-        (lifetimeAttr.array as Float32Array)[i] -= 1;
-
-        // Respawn dead particles
-        if ((lifetimeAttr.array as Float32Array)[i] <= 0) {
-          (positionAttr.array as Float32Array)[i3] = (Math.random() - 0.5) * 10;
-          (positionAttr.array as Float32Array)[i3 + 1] =
-            (Math.random() - 0.5) * 10;
-          (positionAttr.array as Float32Array)[i3 + 2] =
-            (Math.random() - 0.5) * 2;
-          (maxLifetimeAttr.array as Float32Array)[i] =
-            Math.random() * 200 + 100;
-          (lifetimeAttr.array as Float32Array)[i] =
-            (maxLifetimeAttr.array as Float32Array)[i];
-          velocities[i2] = (Math.random() - 0.5) * 0.002;
-          velocities[i2 + 1] = (Math.random() - 0.5) * 0.002;
-        }
-      }
-
-      positionAttr.needsUpdate = true;
-      lifetimeAttr.needsUpdate = true;
+      material.uniforms.uTime.value = (performance.now() - startTime) * 0.001;
 
       renderer.render(scene, camera);
     };

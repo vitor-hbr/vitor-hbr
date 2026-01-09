@@ -2,10 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import * as THREE from "three";
-import {
-  profileVertexShader,
-  profileFragmentShader,
-} from "@/shaders/profile";
+import { profileVertexShader, profileFragmentShader } from "@/shaders/profile";
 
 const IMAGE_SIZE = 200;
 const PIXEL_SIZE = 4;
@@ -116,7 +113,10 @@ export function ProfileImage() {
   const imageDataRef = useRef<ImageData | null>(null);
 
   // Load actual image and create texture
-  const loadImage = useCallback((): Promise<{ texture: THREE.Texture; imageData: ImageData }> => {
+  const loadImage = useCallback((): Promise<{
+    texture: THREE.Texture;
+    imageData: ImageData;
+  }> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -152,7 +152,10 @@ export function ProfileImage() {
     });
   }, []);
 
-  function createPlaceholderTexture(): { texture: THREE.DataTexture; imageData: ImageData } {
+  function createPlaceholderTexture(): {
+    texture: THREE.DataTexture;
+    imageData: ImageData;
+  } {
     const size = IMAGE_SIZE;
     const data = new Uint8Array(size * size * 4);
 
@@ -178,13 +181,28 @@ export function ProfileImage() {
           const xVal = c * (1 - Math.abs((hPrime % 2) - 1));
           const m = light - c / 2;
 
-          let r = 0, g = 0, b = 0;
-          if (hPrime < 1) { r = c; g = xVal; }
-          else if (hPrime < 2) { r = xVal; g = c; }
-          else if (hPrime < 3) { g = c; b = xVal; }
-          else if (hPrime < 4) { g = xVal; b = c; }
-          else if (hPrime < 5) { r = xVal; b = c; }
-          else { r = c; b = xVal; }
+          let r = 0,
+            g = 0,
+            b = 0;
+          if (hPrime < 1) {
+            r = c;
+            g = xVal;
+          } else if (hPrime < 2) {
+            r = xVal;
+            g = c;
+          } else if (hPrime < 3) {
+            g = c;
+            b = xVal;
+          } else if (hPrime < 4) {
+            g = xVal;
+            b = c;
+          } else if (hPrime < 5) {
+            r = xVal;
+            b = c;
+          } else {
+            r = c;
+            b = xVal;
+          }
 
           data[i] = Math.floor((r + m) * 255);
           data[i + 1] = Math.floor((g + m) * 255);
@@ -214,7 +232,8 @@ export function ProfileImage() {
     reducedMotionRef.current = mediaQuery.matches;
 
     const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    const gl =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
     if (!gl) return;
 
     const scene = new THREE.Scene();
@@ -283,7 +302,7 @@ export function ProfileImage() {
       renderer,
       material,
       animationId: 0,
-      texture: null as unknown as THREE.Texture
+      texture: null as unknown as THREE.Texture,
     };
 
     const animate = () => {
@@ -294,7 +313,10 @@ export function ProfileImage() {
         const diff = hoverRef.current.target - hoverRef.current.current;
         hoverRef.current.current += diff * 0.1;
         material.uniforms.uHover.value = hoverRef.current.current;
-        material.uniforms.uMouse.value.set(mouseRef.current.x, mouseRef.current.y);
+        material.uniforms.uMouse.value.set(
+          mouseRef.current.x,
+          mouseRef.current.y
+        );
       }
 
       renderer.render(scene, camera);
@@ -317,7 +339,13 @@ export function ProfileImage() {
 
   // Initialize expanded (3D columns) scene with instanced rendering
   useEffect(() => {
-    if (!isExpanded || !expandedContainerRef.current || !imageDataRef.current || !smallImageRectRef.current) return;
+    if (
+      !isExpanded ||
+      !expandedContainerRef.current ||
+      !imageDataRef.current ||
+      !smallImageRectRef.current
+    )
+      return;
 
     const container = expandedContainerRef.current;
     const width = window.innerWidth;
@@ -329,7 +357,7 @@ export function ProfileImage() {
 
     // Calculate start and end camera positions
     // Start: camera positioned to make the mesh appear at the profile image location
-    const startCenterX = (startRect.left + startRect.width / 2 - width / 2);
+    const startCenterX = startRect.left + startRect.width / 2 - width / 2;
     const startCenterY = -(startRect.top + startRect.height / 2 - height / 2);
 
     // Scale factor: how big should the mesh be at start vs end
@@ -361,7 +389,14 @@ export function ProfileImage() {
     const halfGrid = (COLUMN_GRID_SIZE - 1) / 2;
 
     // First pass: collect luminance values and count valid pixels
-    const pixelData: { x: number; z: number; r: number; g: number; b: number; lum: number }[] = [];
+    const pixelData: {
+      x: number;
+      z: number;
+      r: number;
+      g: number;
+      b: number;
+      lum: number;
+    }[] = [];
 
     for (let y = 0; y < COLUMN_GRID_SIZE; y++) {
       for (let x = 0; x < COLUMN_GRID_SIZE; x++) {
@@ -379,14 +414,17 @@ export function ProfileImage() {
           pixelData.push({
             x: (x - halfGrid) * 1.0,
             z: (y - halfGrid) * 1.0,
-            r, g, b, lum
+            r,
+            g,
+            b,
+            lum,
           });
         }
       }
     }
 
     const instanceCount = pixelData.length;
-    const luminances = pixelData.map(p => p.lum);
+    const luminances = pixelData.map((p) => p.lum);
     const minLum = Math.min(...luminances);
     const maxLum = Math.max(...luminances);
     const lumRange = maxLum - minLum || 1;
@@ -402,8 +440,12 @@ export function ProfileImage() {
 
     pixelData.forEach((pixel, idx) => {
       const normalizedLum = (pixel.lum - minLum) / lumRange;
-      const normalHeight = MIN_COLUMN_HEIGHT + normalizedLum * (MAX_COLUMN_HEIGHT - MIN_COLUMN_HEIGHT);
-      const invertedHeight = MIN_COLUMN_HEIGHT + (1 - normalizedLum) * (MAX_COLUMN_HEIGHT - MIN_COLUMN_HEIGHT);
+      const normalHeight =
+        MIN_COLUMN_HEIGHT +
+        normalizedLum * (MAX_COLUMN_HEIGHT - MIN_COLUMN_HEIGHT);
+      const invertedHeight =
+        MIN_COLUMN_HEIGHT +
+        (1 - normalizedLum) * (MAX_COLUMN_HEIGHT - MIN_COLUMN_HEIGHT);
 
       instancePositions[idx * 3] = pixel.x;
       instancePositions[idx * 3 + 1] = 0;
@@ -429,13 +471,29 @@ export function ProfileImage() {
     });
 
     // Create instanced mesh
-    const columnMesh = new THREE.InstancedMesh(boxGeometry, material, instanceCount);
+    const columnMesh = new THREE.InstancedMesh(
+      boxGeometry,
+      material,
+      instanceCount
+    );
 
     // Add instance attributes
-    boxGeometry.setAttribute('instancePosition', new THREE.InstancedBufferAttribute(instancePositions, 3));
-    boxGeometry.setAttribute('instanceColor', new THREE.InstancedBufferAttribute(instanceColors, 3));
-    boxGeometry.setAttribute('normalHeight', new THREE.InstancedBufferAttribute(normalHeights, 1));
-    boxGeometry.setAttribute('invertedHeight', new THREE.InstancedBufferAttribute(invertedHeights, 1));
+    boxGeometry.setAttribute(
+      "instancePosition",
+      new THREE.InstancedBufferAttribute(instancePositions, 3)
+    );
+    boxGeometry.setAttribute(
+      "instanceColor",
+      new THREE.InstancedBufferAttribute(instanceColors, 3)
+    );
+    boxGeometry.setAttribute(
+      "normalHeight",
+      new THREE.InstancedBufferAttribute(normalHeights, 1)
+    );
+    boxGeometry.setAttribute(
+      "invertedHeight",
+      new THREE.InstancedBufferAttribute(invertedHeights, 1)
+    );
 
     // Set identity matrices for all instances
     const matrix = new THREE.Matrix4();
@@ -489,7 +547,10 @@ export function ProfileImage() {
 
       if (state.isClosing) {
         // Closing animation
-        state.transitionProgress = Math.max(0, state.transitionProgress - 0.035);
+        state.transitionProgress = Math.max(
+          0,
+          state.transitionProgress - 0.035
+        );
 
         if (state.transitionProgress <= 0) {
           setIsExpanded(false);
@@ -498,10 +559,14 @@ export function ProfileImage() {
       } else {
         // Opening animation
         if (state.transitionProgress < 1) {
-          state.transitionProgress = Math.min(1, state.transitionProgress + 0.035);
+          state.transitionProgress = Math.min(
+            1,
+            state.transitionProgress + 0.035
+          );
         } else {
           // Height inversion animation (only when fully open)
-          state.inversionProgress += HEIGHT_INVERSION_SPEED * state.inversionDirection;
+          state.inversionProgress +=
+            HEIGHT_INVERSION_SPEED * state.inversionDirection;
 
           if (state.inversionProgress >= 1) {
             state.inversionDirection = -1;
@@ -509,20 +574,29 @@ export function ProfileImage() {
             state.inversionDirection = 1;
           }
 
-          material.uniforms.uInversion.value = easeInOutSine(Math.max(0, Math.min(1, state.inversionProgress)));
+          material.uniforms.uInversion.value = easeInOutSine(
+            Math.max(0, Math.min(1, state.inversionProgress))
+          );
         }
       }
 
       // Interpolate camera position
-      camera.position.lerpVectors(state.cameraStartPos, state.cameraEndPos, eased);
+      camera.position.lerpVectors(
+        state.cameraStartPos,
+        state.cameraEndPos,
+        eased
+      );
 
       // Interpolate mesh scale
-      const currentScale = state.meshStartScale + (state.meshEndScale - state.meshStartScale) * eased;
+      const currentScale =
+        state.meshStartScale +
+        (state.meshEndScale - state.meshStartScale) * eased;
       columnMesh.scale.setScalar(currentScale);
 
       // Interpolate mesh position (from offset to center)
       const startX = (startRect.left + startRect.width / 2 - width / 2) * 0.05;
-      const startY = -(startRect.top + startRect.height / 2 - height / 2) * 0.05;
+      const startY =
+        -(startRect.top + startRect.height / 2 - height / 2) * 0.05;
       columnMesh.position.x = startX * (1 - eased);
       columnMesh.position.y = startY * (1 - eased);
 
@@ -535,8 +609,10 @@ export function ProfileImage() {
 
       // Smooth rotation (only apply user rotation after opening)
       if (state.transitionProgress >= 1 || state.isClosing) {
-        state.currentRotation.x += (state.targetRotation.x - state.currentRotation.x) * 0.05;
-        state.currentRotation.y += (state.targetRotation.y - state.currentRotation.y) * 0.05;
+        state.currentRotation.x +=
+          (state.targetRotation.x - state.currentRotation.x) * 0.05;
+        state.currentRotation.y +=
+          (state.targetRotation.y - state.currentRotation.y) * 0.05;
       }
       columnMesh.rotation.x = state.currentRotation.x;
       columnMesh.rotation.y = state.currentRotation.y;
@@ -548,24 +624,36 @@ export function ProfileImage() {
 
     // Mouse/touch handlers
     const handlePointerDown = (e: PointerEvent) => {
-      if (!expandedSceneRef.current || expandedSceneRef.current.isClosing) return;
+      if (!expandedSceneRef.current || expandedSceneRef.current.isClosing)
+        return;
       if (expandedSceneRef.current.transitionProgress < 1) return; // Don't allow interaction during opening
 
       expandedSceneRef.current.isDragging = true;
       expandedSceneRef.current.hasDragged = false;
-      expandedSceneRef.current.dragStartPosition = { x: e.clientX, y: e.clientY };
-      expandedSceneRef.current.previousMousePosition = { x: e.clientX, y: e.clientY };
+      expandedSceneRef.current.dragStartPosition = {
+        x: e.clientX,
+        y: e.clientY,
+      };
+      expandedSceneRef.current.previousMousePosition = {
+        x: e.clientX,
+        y: e.clientY,
+      };
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-      if (!expandedSceneRef.current || !expandedSceneRef.current.isDragging) return;
+      if (!expandedSceneRef.current || !expandedSceneRef.current.isDragging)
+        return;
 
-      const deltaX = e.clientX - expandedSceneRef.current.previousMousePosition.x;
-      const deltaY = e.clientY - expandedSceneRef.current.previousMousePosition.y;
+      const deltaX =
+        e.clientX - expandedSceneRef.current.previousMousePosition.x;
+      const deltaY =
+        e.clientY - expandedSceneRef.current.previousMousePosition.y;
 
       // Check if user has actually dragged
-      const totalDeltaX = e.clientX - expandedSceneRef.current.dragStartPosition.x;
-      const totalDeltaY = e.clientY - expandedSceneRef.current.dragStartPosition.y;
+      const totalDeltaX =
+        e.clientX - expandedSceneRef.current.dragStartPosition.x;
+      const totalDeltaY =
+        e.clientY - expandedSceneRef.current.dragStartPosition.y;
       if (Math.abs(totalDeltaX) > 5 || Math.abs(totalDeltaY) > 5) {
         expandedSceneRef.current.hasDragged = true;
       }
@@ -577,16 +665,21 @@ export function ProfileImage() {
         Math.min(Math.PI / 2, expandedSceneRef.current.targetRotation.x)
       );
 
-      expandedSceneRef.current.previousMousePosition = { x: e.clientX, y: e.clientY };
+      expandedSceneRef.current.previousMousePosition = {
+        x: e.clientX,
+        y: e.clientY,
+      };
     };
 
     const handlePointerUp = () => {
       if (!expandedSceneRef.current) return;
 
       // If user clicked without dragging and animation is complete, close
-      if (!expandedSceneRef.current.hasDragged &&
-          !expandedSceneRef.current.isClosing &&
-          expandedSceneRef.current.transitionProgress >= 1) {
+      if (
+        !expandedSceneRef.current.hasDragged &&
+        !expandedSceneRef.current.isClosing &&
+        expandedSceneRef.current.transitionProgress >= 1
+      ) {
         expandedSceneRef.current.isClosing = true;
       }
 
@@ -603,7 +696,11 @@ export function ProfileImage() {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && expandedSceneRef.current && !expandedSceneRef.current.isClosing) {
+      if (
+        e.key === "Escape" &&
+        expandedSceneRef.current &&
+        !expandedSceneRef.current.isClosing
+      ) {
         expandedSceneRef.current.isClosing = true;
       }
     };
@@ -642,12 +739,14 @@ export function ProfileImage() {
   }, []);
 
   const handleMouseEnter = useCallback(() => {
-    if (reducedMotionRef.current) return;
+    if (reducedMotionRef.current || window.matchMedia("(hover: none)").matches)
+      return;
     hoverRef.current.target = 1;
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    if (reducedMotionRef.current) return;
+    if (reducedMotionRef.current || window.matchMedia("(hover: none)").matches)
+      return;
     hoverRef.current.target = 0;
   }, []);
 
@@ -668,7 +767,7 @@ export function ProfileImage() {
           width: IMAGE_SIZE,
           height: IMAGE_SIZE,
           opacity: isExpanded ? 0 : 1,
-          transition: "opacity 0.15s ease-out"
+          transition: "opacity 0.15s ease-out",
         }}
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
@@ -692,7 +791,7 @@ export function ProfileImage() {
           {/* 3D Canvas */}
           <div
             ref={expandedContainerRef}
-            className="absolute inset-0 cursor-grab active:cursor-grabbing"
+            className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
           />
 
           {/* Close hint */}
